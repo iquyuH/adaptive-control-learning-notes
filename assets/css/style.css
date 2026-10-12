@@ -1,0 +1,87 @@
+:root{color-scheme:light;--text:#24292e;--muted:#586069;--link:#0366d6;--border:#eaecef;--border-strong:#d1d5da;--subtle:#f6f8fa}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{margin:0;background:#fff;color:var(--text);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Helvetica,Arial,sans-serif}
+.page{max-width:1012px;margin:0 auto;padding:32px 16px}
+.site-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:30px;padding-bottom:12px;border-bottom:1px solid var(--border);font-size:14px}
+.site-header a{font-weight:600}.site-header button{flex:none}
+.markdown-body{min-width:0;overflow-wrap:break-word}
+a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}
+button,input,select{font:inherit}button{padding:5px 12px;border:1px solid var(--border-strong);border-radius:4px;background:var(--subtle);color:var(--text);cursor:pointer}button:hover{background:#edf1f4}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+h1,h2,h3,h4{font-weight:600;line-height:1.25;overflow-wrap:break-word}
+h1{font-size:32px;margin:0 0 16px;padding-bottom:.3em;border-bottom:1px solid var(--border)}
+h2{font-size:24px;margin:24px 0 16px;padding-bottom:.3em;border-bottom:1px solid var(--border)}
+h3{font-size:20px;margin:24px 0 16px}h4{font-size:16px;margin:24px 0 16px}
+p,ul,ol,blockquote,pre,table,.equation{margin:0 0 16px}p{line-height:1.5}
+ul,ol{padding-left:2em}li{margin:.25em 0}li>p{margin:8px 0}
+table{width:100%;border-spacing:0;border-collapse:collapse;display:block;overflow-x:auto}th,td{padding:6px 13px;border:1px solid var(--border-strong);text-align:left}tr:nth-child(2n){background:var(--subtle)}
+blockquote{padding:0 1em;border-left:4px solid var(--border-strong);color:var(--muted)}
+code{font:85% Consolas,"Liberation Mono",Menlo,monospace;background:rgba(27,31,35,.05);padding:.2em .4em;border-radius:3px}
+pre{padding:16px;overflow:auto;background:var(--subtle);border-radius:4px;line-height:1.45}pre code{padding:0;background:none;font-size:13px}
+hr{height:1px;padding:0;margin:24px 0;background:var(--border);border:0}
+.muted,.source-ref,.chapter-meta,.eyebrow,.section-code{color:var(--muted);font-size:14px}
+.source-ref{margin-top:-6px}.eyebrow,.section-code{display:block;margin:0 0 8px;font-size:12px}.lead{color:var(--text)}
+.chapter-header{margin:0 0 18px}.chapter-header h1{margin-bottom:16px}.chapter-header .lead{margin-bottom:12px}.chapter-meta{display:flex;flex-wrap:wrap;column-gap:20px;row-gap:4px;margin-bottom:16px}
+.chapter-section{margin-top:32px;scroll-margin-top:20px}.chapter-section>h2:first-of-type{margin-top:0}.chapter-section:last-child{margin-bottom:32px}
+.chapter-list p{margin:0 0 20px}.chapter-list .muted{display:inline-block;margin-top:4px}
+.toc{margin:18px 0 30px;padding:8px 14px;background:var(--subtle);border:1px solid var(--border);border-radius:4px}.toc summary{padding:4px 0}.section-nav{columns:2;column-gap:24px;padding:10px 0 4px}.section-nav a{display:block;break-inside:avoid;padding:3px 0;font-size:14px}
+.equation{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:12px 16px;background:var(--subtle);border-radius:4px;line-height:1.7}.equation mjx-container[display="true"]{margin:.35em 0!important}
+mjx-container[display="true"]{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:4px 0}
+mjx-container:not([display="true"]){display:inline-block;max-width:100%;overflow-x:auto;overflow-y:hidden;vertical-align:middle}
+.two-col{display:block}.concept{margin:0 0 16px}.concept h3{margin-bottom:8px}
+.flow{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0}.flow span{font-size:14px}.flow span:not(:last-child)::after{content:" →";color:var(--muted)}
+.callout{margin:16px 0;padding:0 16px;border-left:4px solid var(--border-strong);color:var(--muted);background:none;font-size:15px}.callout strong{display:block;margin-bottom:4px;color:var(--text)}.callout p:last-child{margin-bottom:0}.callout.warning,.callout.note{background:none;border-color:var(--border-strong)}
+details{margin:16px 0;padding:8px 14px;border:1px solid var(--border);border-radius:4px}summary{cursor:pointer;font-weight:600}details[open] summary{margin-bottom:12px}details p:last-child{margin-bottom:0}
+.exercise{margin:24px 0;padding-bottom:16px;border-bottom:1px solid var(--border)}.exercise:last-child{border-bottom:0}.exercise h3{margin-top:0}.result{font-weight:600}
+.lab-panel{margin:24px 0;padding:20px 0 8px;border-top:1px solid var(--border)}.lab-panel h3{margin:0 0 12px}.controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:16px 0}.controls label{display:flex;flex-direction:column;gap:4px;font-size:14px}.controls input[type=number],.controls select{width:160px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:4px;background:#fff}.controls input[type=range]{width:220px;max-width:100%;accent-color:var(--link)}.controls .primary{background:var(--subtle);color:var(--text)}
+.metrics{display:flex;flex-wrap:wrap;gap:12px 32px;margin:18px 0}.metrics div{min-width:170px}.metrics strong{display:block;font-size:20px;font-weight:600}.metrics span{font-size:13px;color:var(--muted)}.legend{display:flex;flex-wrap:wrap;gap:16px;margin:8px 0;color:var(--muted);font-size:13px}.legend b{display:inline-block;width:18px;height:3px;margin-right:5px;vertical-align:middle}.plot{display:block;max-width:100%;width:100%;height:auto;margin:8px 0 18px;border:1px solid var(--border);background:#fff}.status{margin:16px 0;padding:8px 12px;border-left:4px solid var(--border-strong);background:var(--subtle);font-size:14px}
+.document-image{display:block;max-width:100%;height:auto;margin:16px auto;border:1px solid var(--border)}
+.source-link{display:block;margin-bottom:12px}.source-link small{display:block;color:var(--muted);font-size:13px}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--border);color:var(--muted);font-size:13px}.skip{position:absolute;left:-9999px}.skip:focus{left:16px;top:8px;padding:8px;background:#fff;z-index:10}
+@media(max-width:600px){.page{padding:16px}.site-header{margin-bottom:24px}.site-header button{font-size:12px}.section-nav{columns:1}.chapter-meta{font-size:12px}.controls{align-items:start}.controls label{width:calc(50% - 6px)}.controls input[type=number],.controls select{width:100%}.metrics{display:block}.metrics div{margin:12px 0}.equation{padding:10px}h1{font-size:30px}}
+@media print{.page{max-width:none;padding:0}.site-header,.toc,.skip,.controls{display:none!important}.chapter-section{margin-top:22px}h1{font-size:26px}h2{font-size:20px}h3{font-size:17px}body{font-size:11pt}.equation{font-size:10pt}.equation,.callout,.plot,figure{break-inside:avoid}h1,h2,h3,h4{break-after:avoid}.lab-panel{break-inside:avoid}a{color:var(--text)}footer{margin-top:24px}}
+
+/* Chapter 2 follows the GitHub Markdown document rules used by chapter 3. */
+.chapter-page{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"}
+.chapter-page .page{padding:32px 16px}
+.chapter-page .site-header{position:relative;min-height:0;margin:0 0 24px;padding:0;border:0;align-items:flex-start;font-size:32px;line-height:1.25}
+.chapter-page .site-header>a{display:block;flex:1;padding-bottom:.3em;border-bottom:1px solid #eaecef;font-size:32px;font-weight:600;line-height:1.25}
+.chapter-page .site-header button{position:absolute;top:7px;right:0;border-radius:3px;font-size:14px;line-height:20px;padding:4px 8px}
+.chapter-page .chapter-header h1{margin:0 0 16px}
+.chapter-page .chapter-header .lead{margin-bottom:16px}
+.chapter-page .chapter-meta{margin-bottom:16px;font-size:14px}
+.chapter-page h1,.chapter-page h2,.chapter-page h3,.chapter-page h4{line-height:1.25}
+.chapter-page h1,.chapter-page h2{padding-bottom:.3em}
+.chapter-page .chapter-section{margin-top:0}
+.chapter-page .chapter-section>h2:first-of-type{margin-top:24px}
+.chapter-page p,.chapter-page ul,.chapter-page ol,.chapter-page blockquote,.chapter-page pre,.chapter-page table,.chapter-page .equation{margin-bottom:16px}
+.chapter-page ul,.chapter-page ol{padding-left:2em}
+.chapter-page .source-ref,.chapter-page .muted,.chapter-page .chapter-meta{color:#6a737d}
+.chapter-page .toc{margin:16px 0 24px;padding:0;background:none;border:0;border-radius:0}
+.chapter-page .toc summary{padding:0;font-weight:600}
+.chapter-page .section-nav{columns:initial;display:flex;flex-wrap:wrap;gap:4px 16px;padding:8px 0}
+.chapter-page .section-nav a{padding:0;font-size:14px}
+.chapter-page .callout{padding:0 1em;border-left:.25em solid #dfe2e5;color:#6a737d;background:none;font-size:16px}
+.chapter-page .callout strong{color:inherit}
+.chapter-page .callout p:last-child{margin-bottom:0}
+.chapter-page .two-col{display:block}
+.chapter-page .concept{margin:16px 0}
+.chapter-page .concept h3{margin:24px 0 16px}
+.chapter-page .equation{max-width:100%;margin:18px 0;padding:0;background:transparent;border-radius:0;line-height:1.5}
+.chapter-page .equation mjx-container[display="true"]{margin:0!important;text-align:center!important}
+.chapter-page .exercise{margin:24px 0;padding-bottom:16px;border-bottom:1px solid #dfe2e5}
+.chapter-page .flow{display:block;margin:16px 0}
+.chapter-page .flow span{font-size:16px}
+.chapter-page .flow span:not(:last-child)::after{content:" →";color:#6a737d}
+.chapter-page details{margin:16px 0;padding:0;border:0;border-radius:0}
+.chapter-page details[open] summary{margin-bottom:12px}
+.chapter-page .lab-panel{padding:16px 0 8px;border-top:1px solid #dfe2e5}
+.chapter-page .controls input[type="number"],.chapter-page .controls select{border-radius:3px}
+.chapter-page .plot{border:0}
+.chapter-page table th,.chapter-page table td{border-color:#dfe2e5}
+.chapter-page pre{border-radius:3px}
+.chapter-page pre code{font-size:100%}
+.chapter-page .status{padding:0 1em;border-left:.25em solid #dfe2e5;background:none;color:#6a737d}
+.chapter-page .source-link{margin-bottom:16px}
+@media(max-width:600px){.chapter-page .page{padding:32px 16px}.chapter-page .site-header{display:block}.chapter-page .site-header button{position:static;display:block;margin:8px 0 0 auto}.chapter-page .section-nav{display:block}.chapter-page .section-nav a{margin:4px 12px 4px 0}}
+@media print{.chapter-page .page{padding:0}.chapter-page .site-header>a{font-size:24px}}

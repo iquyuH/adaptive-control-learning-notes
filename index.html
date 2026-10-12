@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="自适应控制学习笔记：课件、推导、习题、仿真与工程理解。">
+<title>课程首页 · 自适应控制学习笔记</title>
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/math-config.js"></script>
+<script defer src="assets/vendor/mathjax/es5/tex-chtml.js"></script>
+<script defer src="assets/js/app.js"></script>
+
+</head>
+<body class="">
+<a class="skip" href="#main">跳转到正文</a>
+<div class="page">
+  <header class="site-header"><a href="index.html">自适应控制学习笔记</a><button id="print" type="button">打印 / 保存 PDF</button></header>
+  <main id="main" class="markdown-body"><h1>自适应控制学习笔记</h1>
+<p>这里整理课程学习中的理解、推导和验证。当前完成第二单元“基于优化策略的自校正器”，内容结合课堂 PPT、习题题目与答案。</p>
+<p>建议按“模型与延迟 → 未来输出预测 → 控制律 → 在线辨识 → 广义最小方差 → 作业验证”的顺序阅读。公式旁保留推导和原始资料入口；交互实验可用于核对题目中的方差与闭环极点。</p>
+<h2>目录</h2>
+<p class="muted">当前仅收录第二单元；后续章节将继续加入此目录。</p>
+<div class="chapter-list"><p><a href="chapters/chapter2.html">第 02 单元：基于优化策略的自校正器</a><br><span class="muted">从未来输出的预测，到在线辨识与控制能量的权衡。 CARMA 模型 · 最优预测 · MVC · RLS · GMV</span></p></div>
+<h2>第二单元的学习主线</h2>
+<ol>
+<li><strong>建立模型：</strong>辨认 A、B、C、D 与纯延迟 d，区分对象通道和噪声通道。</li>
+<li><strong>预测未来：</strong>把未来输出分成当前可以计算的部分与不可预测的噪声。</li>
+<li><strong>设计控制：</strong>根据性能指标求出当前输入，并写成逐拍可执行的差分式。</li>
+<li><strong>适应变化：</strong>利用数据更新模型参数，再用控制权重平衡误差与输入代价。</li>
+</ol>
+<h2>资料与核对</h2>
+<p>网页随附课件、六道习题和四页手写答案。复算时发现的符号、乘法与稳定范围问题已在对应位置注明；<a href="chapters/chapter2.html#sources">资料档案</a>可用于回查原件。</p>
+</main>
+  <footer>自适应控制学习笔记</footer>
+</div>
+</body></html>
