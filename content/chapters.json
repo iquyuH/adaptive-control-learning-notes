@@ -1,3 +1,111 @@
 [
-  {"id":"chapter2","number":"02","title":"基于优化策略的自校正器","subtitle":"从未来输出的预测，到在线辨识与控制能量的权衡。","source":"chapter2.html","status":"已整理","topics":"CARMA 模型 · 最优预测 · MVC · RLS · GMV","sections":[["overview","本章主线"],["model","2.1 模型与稳定性"],["prediction","2.2 最优预测"],["mvc","2.2 最小方差控制"],["str","2.3 自校正与 RLS"],["gmv","2.4 广义最小方差"],["exercises","课后习题"],["lab","交互实验室"],["review","曾经卡住的地方"],["engineering","工程迁移"],["sources","资料档案"]]}
+  {
+    "id": "chapter2",
+    "number": "02",
+    "title": "基于优化策略的自校正器",
+    "subtitle": "从未来输出的预测，到在线辨识与控制能量的权衡。",
+    "source": "chapter2.html",
+    "status": "已整理",
+    "topics": "CARMA 模型 · 最优预测 · MVC · RLS · GMV",
+    "sections": [
+      [
+        "overview",
+        "本章主线"
+      ],
+      [
+        "model",
+        "模型与延迟"
+      ],
+      [
+        "prediction",
+        "最优预测"
+      ],
+      [
+        "mvc",
+        "最小方差控制"
+      ],
+      [
+        "str",
+        "自校正控制"
+      ],
+      [
+        "gmv",
+        "广义最小方差"
+      ],
+      [
+        "exercises",
+        "课后习题"
+      ],
+      [
+        "lab",
+        "交互实验室"
+      ],
+      [
+        "review",
+        "曾经卡住的地方"
+      ],
+      [
+        "engineering",
+        "工程应用"
+      ],
+      [
+        "sources",
+        "资料档案"
+      ]
+    ]
+  },
+  {
+    "id": "chapter3",
+    "number": "03",
+    "title": "LQG 自校正器",
+    "subtitle": "从控制目标，到状态估计与分离设计。",
+    "source": "chapter3.html",
+    "status": "已整理",
+    "topics": "LQ · Riccati · 状态观测 · Kalman · LQG",
+    "scripts": [
+      "lqg-lab.js"
+    ],
+    "sections": [
+      [
+        "overview",
+        "本章主线"
+      ],
+      [
+        "lq",
+        "LQ控制"
+      ],
+      [
+        "observer",
+        "状态观测器"
+      ],
+      [
+        "kalman",
+        "卡尔曼滤波"
+      ],
+      [
+        "separation",
+        "分离原理"
+      ],
+      [
+        "adaptive",
+        "自校正控制"
+      ],
+      [
+        "exercises",
+        "课后习题"
+      ],
+      [
+        "control-lab",
+        "控制与估计"
+      ],
+      [
+        "engineering",
+        "运动控制应用"
+      ],
+      [
+        "sources",
+        "资料档案"
+      ]
+    ]
+  }
 ]

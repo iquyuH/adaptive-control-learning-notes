@@ -24,12 +24,12 @@ def build():
         home = home.replace('当前仅收录第二单元', f'当前收录 {len(chapters)} 个单元')
     (ROOT / 'index.html').write_text(render('课程首页', '', home), encoding='utf-8')
     for c in chapters:
-        toc = f'<details class="toc"><summary>本单元目录</summary><nav class="section-nav" aria-label="第 {escape(c["number"])} 单元目录">'
+        toc = f'<div class="toc"><h2>本单元目录</h2><nav class="section-nav" aria-label="第 {escape(c["number"])} 单元目录">'
         toc += ''.join(f'<a href="#{sid}">{escape(label)}</a>' for sid,label in c['sections'])
-        toc += '</nav></details>'
+        toc += '</nav></div>'
         body = (ROOT / 'content' / c['source']).read_text(encoding='utf-8')
         body = body.replace('</header>', '</header>' + toc, 1)
-        page = render(c['title'], '../', body, '<script defer src="../assets/js/numerics.js"></script><script defer src="../assets/js/lab.js"></script>', 'chapter-page')
+        page = render(c['title'], '../', body, ''.join(f'<script defer src="../assets/js/{escape(name)}"></script>' for name in c.get('scripts', ['numerics.js', 'lab.js'])), 'chapter-page')
         (ROOT / 'chapters' / (c['id']+'.html')).write_text(page, encoding='utf-8')
     exercise_sheet = (ROOT / 'content/exercise-sheet.html').read_text(encoding='utf-8')
     (ROOT / 'chapters/exercise-sheet.html').write_text(

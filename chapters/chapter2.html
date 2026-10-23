@@ -14,87 +14,86 @@
 <a class="skip" href="#main">跳转到正文</a>
 <div class="page">
   <header class="site-header"><a href="../index.html">自适应控制学习笔记</a><button id="print" type="button">打印 / 保存 PDF</button></header>
-  <main id="main" class="markdown-body"><header class="chapter-header"><h1>基于优化策略的自校正器</h1><p class="lead">先预测未来，再决定现在怎么控制；模型不准，就用数据修正；动作太猛，就把控制代价纳入目标。</p><div class="chapter-meta"><span>第二单元 · 思路版</span><span>6 道课后习题</span><span>附交互实验与原始资料</span></div></header><details class="toc"><summary>本单元目录</summary><nav class="section-nav" aria-label="第 02 单元目录"><a href="#overview">本章主线</a><a href="#model">2.1 模型与稳定性</a><a href="#prediction">2.2 最优预测</a><a href="#mvc">2.2 最小方差控制</a><a href="#str">2.3 自校正与 RLS</a><a href="#gmv">2.4 广义最小方差</a><a href="#exercises">课后习题</a><a href="#lab">交互实验室</a><a href="#review">曾经卡住的地方</a><a href="#engineering">工程迁移</a><a href="#sources">资料档案</a></nav></details>
-
-<section id="overview" class="chapter-section"><h2>本章主线：为什么控制之前要预测？</h2>
-<p>当前输入不一定立即起作用。若对象有两拍延迟，现在的控制量只能影响两拍后的输出。因此，不能只盯着眼前误差，而要先判断：<strong>等控制真正生效时，系统会变成什么样？</strong></p>
-<p>整章围绕同一个过程展开：读懂模型与延迟，预测未来输出，选择能改善预测结果的输入，再检查闭环是否稳定、动作是否合理。</p>
-<table><thead><tr><th>遇到的问题</th><th>采用的思路</th></tr></thead><tbody><tr><td>模型已知，希望输出波动尽量小</td><td>最小方差控制 MVC：抵消可预测的偏差</td></tr><tr><td>模型未知或参数缓慢变化</td><td>自校正器 STR：边辨识，边调整控制</td></tr><tr><td>控制动作过大，或普通 MVC 难以稳定实现</td><td>广义最小方差 GMV：加入输入代价，再检查稳定范围</td></tr></tbody></table>
+  <main id="main" class="markdown-body"><header class="chapter-header"><h1>基于优化策略的自校正器</h1><p class="lead">控制有延迟，就得提前判断输入生效时的输出。模型和控制量的选择，都围绕这个预测展开。</p></header><div class="toc"><h2>本单元目录</h2><nav class="section-nav" aria-label="第 02 单元目录"><a href="#overview">本章主线</a><a href="#model">模型与延迟</a><a href="#prediction">最优预测</a><a href="#mvc">最小方差控制</a><a href="#str">自校正控制</a><a href="#gmv">广义最小方差</a><a href="#exercises">课后习题</a><a href="#lab">交互实验室</a><a href="#review">曾经卡住的地方</a><a href="#engineering">工程应用</a><a href="#sources">资料档案</a></nav></div>
+<section id="overview" class="chapter-section"><h2>本章主线</h2>
+<p>对象若有两拍延迟，现在算出的控制量要等两拍才起作用。眼前的误差已经来不及改变，控制器需要判断<strong>两拍后的输出会偏到哪里</strong>，据此选择当前输入。</p>
+<p>有了预测，就可以计算控制量。不过，算出一个最优解还没有结束，闭环能否稳定运行、输入是否过大，都要接着检查。</p>
+<table><thead><tr><th>遇到的问题</th><th>采用的思路</th></tr></thead><tbody><tr><td>模型已知，希望输出波动尽量小</td><td>最小方差控制 MVC，抵消可预测的偏差</td></tr><tr><td>模型未知或参数缓慢变化</td><td>自校正器 STR，边辨识，边调整控制</td></tr><tr><td>控制动作过大，或普通 MVC 难以稳定实现</td><td>广义最小方差 GMV，加入输入代价，再检查稳定范围</td></tr></tbody></table>
 </section>
 
-<section id="model" class="chapter-section"><h2>2.1 读模型：分清对象、扰动与延迟</h2>
+<section id="model" class="chapter-section"><h2>模型与延迟</h2>
 <div class="equation">\[A(q^{-1})y(k)=B(q^{-1})q^{-d}u(k)+C(q^{-1})v(k).\]</div>
-<p>这里 \(y\) 是输出，\(u\) 是输入，\(v\) 是零均值白噪声；\(q^{-1}\) 表示“往前取一拍”，\(d\) 是输入延迟。\(A\) 描述输出的历史关系，\(B\) 描述输入作用，\(C\) 描述白噪声如何进入模型。真正的对象通道是 \(Bq^{-d}/A\)，噪声通道是 \(C/A\)。</p>
-<p>例如 \(y(k)=0.8y(k-1)+2u(k-2)+v(k)\)：输出保留上一拍的影响，输入要等两拍才生效。读模型得到 \(A=1-0.8q^{-1},B=2,C=1,d=2\)，然后才能选预测时域。</p>
-<h3>稳定性先看清在哪个平面求根</h3>
-<p><strong>在 \(q\) 平面，稳定根应在单位圆内；在 \(q^{-1}\) 平面，对应根在单位圆外。</strong>例如 \(1-0.8q^{-1}\) 对应 \(q=0.8\)，不是把 1.25 当成不稳定极点。</p>
-<p>还要分清检查对象：\(A\) 关系到对象动态，\(B\) 关系到输入通道能否稳定求逆，\(C\) 关系到噪声模型的稳定求逆。对象稳定，并不意味着它的逆也稳定。</p>
+<p>这里 \(y\) 是输出，\(u\) 是输入，\(v\) 是零均值白噪声；\(q^{-1}\) 表示“往前取一拍”，\(d\) 是输入延迟。\(A\) 描述输出的历史关系，\(B\) 描述输入作用，\(C\) 给出噪声项的系数。对象通道是 \(Bq^{-d}/A\)，噪声通道是 \(C/A\)。</p>
+<p>例如 \(y(k)=0.8y(k-1)+2u(k-2)+v(k)\)，输出保留上一拍的影响，输入要等两拍才生效。读模型得到 \(A=1-0.8q^{-1},B=2,C=1,d=2\)，然后才能选预测时域。</p>
+<h3>稳定性判断</h3>
+<p><strong>在 \(q\) 平面，稳定根应在单位圆内；在 \(q^{-1}\) 平面，对应根在单位圆外。</strong>例如 \(1-0.8q^{-1}\) 对应 \(q=0.8\)；对应的逆变量根为 1.25，两种写法描述的是同一个动态。</p>
+<p>还要分清检查对象，\(A\) 关系到对象动态，\(B\) 关系到输入通道能否稳定求逆，\(C\) 则要检查其逆滤波器是否稳定。对象稳定，并不意味着它的逆也稳定。</p>
 </section>
 
-<section id="prediction" class="chapter-section"><h2>2.2 预测：把能判断的部分与未来噪声分开</h2>
-<p>未来输出包含两部分：根据当前输出、历史输入和模型可以算出的部分，以及尚未发生的噪声。预测器只负责前者，不能提前知道未来噪声的具体取值。</p>
+<section id="prediction" class="chapter-section"><h2>最优预测</h2>
+<p>未来输出包含两部分，根据当前输出、历史输入和模型可以算出的部分，以及尚未发生的噪声。预测器只负责前者，不能提前知道未来噪声的具体取值。</p>
 <div class="equation">\[y(k+d)=\underbrace{\frac{G}{C}y(k)+\frac{BF}{C}u(k)}_{\text{当前可预测部分}}+\underbrace{Fv(k+d)}_{\text{未来不可预测部分}}.\]</div>
-<p>\(F,G\) 是实现这种拆分的工具，由恒等式 \(C=AF+q^{-d}G\) 求得。做题时，先按延迟确定 \(F\) 的次数，再配系数，最后代回恒等式检查；重点是完成拆分，而不是记住长除法步骤。</p>
+<p>\(F,G\) 是实现这种拆分的工具，由恒等式 \(C=AF+q^{-d}G\) 求得。做题时，先按延迟确定 \(F\) 的次数，再配系数，最后代回恒等式检查。配系数完成后，应能指出哪一部分来自未来噪声。</p>
 <p>在本章白噪声与模型假设下，未来噪声与当前信息正交，因此最小均方预测就是保留可预测部分。<strong>预测最优，不代表预测没有误差。</strong>即使模型完全正确，未来噪声仍然形成误差下限。</p>
-<details><summary>需要计算预测误差下限时</summary><p>若 \(F=1+f_1q^{-1}+\cdots+f_{d-1}q^{-(d-1)}\)，白噪声方差为 \(\sigma^2\)，则最小预测误差方差为 \((1+f_1^2+\cdots+f_{d-1}^2)\sigma^2\)。多拍延迟意味着控制生效前可能积累更多未知扰动。</p></details>
+<div class="explanation"><h4>预测误差下限</h4><p>若 \(F=1+f_1q^{-1}+\cdots+f_{d-1}q^{-(d-1)}\)，白噪声方差为 \(\sigma^2\)，则最小预测误差方差为 \((1+f_1^2+\cdots+f_{d-1}^2)\sigma^2\)。多拍延迟意味着控制生效前可能积累更多未知扰动。</p></div>
 </section>
 
-<section id="mvc" class="chapter-section"><h2>2.2 控制：让预测结果朝目标靠拢</h2>
-<p>控制量无法改变未来噪声，却能改变可预测部分。因此最小方差控制的思路是：<strong>让未来输出的预测值等于目标值。</strong>调节问题的目标为零，便得到：</p>
+<section id="mvc" class="chapter-section"><h2>最小方差控制</h2>
+<p>控制量无法改变未来噪声，却能改变可预测部分。因此最小方差控制的思路是，<strong>让未来输出的预测值等于目标值。</strong>调节问题的目标为零，对应的控制律如下。</p>
 <div class="equation">\[\hat y^*(k+d\mid k)=0\quad\Longrightarrow\quad u(k)=-\frac{G}{BF}y(k).\]</div>
-<p>这并不是让真实输出始终为零，而是尽量消除可预测的波动。剩下的输出波动来自未来噪声，理想稳态下达到上一节的方差下限。若是跟踪问题，则让预测值对齐已知的未来参考值。</p>
-<h3>得到控制律后，还要完成两件事</h3>
-<p><strong>先验稳定性。</strong>在本章标准 CARMA 条件下，闭环特征式含 \(BC\)，所以不能只检查 \(A\)。尤其要防止对非最小相位输入通道直接求逆，也不能用形式上的约分掩盖不稳定内部动态。</p>
+<p>控制消除了可预测的波动，真实输出仍然受到未来噪声影响，理想稳态下达到上一节的方差下限。若是跟踪问题，则让预测值对齐已知的未来参考值。</p>
+<h3>控制律验算</h3>
+<p><strong>先检查稳定性。</strong>在本章标准 CARMA 条件下，闭环特征式含 \(BC\)，所以不能只检查 \(A\)。尤其要防止对非最小相位输入通道直接求逆，也不能用形式上的约分掩盖不稳定内部动态。</p>
 <p><strong>再写成逐拍计算。</strong>展开 \(BF\)，把当前输入留在左边，其余变为当前输出、历史输出和历史输入的加权和。程序每拍先读输出，再算输入，最后保存实际施加的输入；若执行了限幅，历史记录也要保存限幅后的值。</p>
 </section>
 
-<section id="str" class="chapter-section"><h2>2.3 自校正：模型不准，就用预测误差修正</h2>
-<p>前面默认参数已知。实际对象可能随负载、温度或工况变化，自校正器便把“估计参数”和“计算控制”放进同一个循环：</p>
+<section id="str" class="chapter-section"><h2>自校正控制</h2>
+<p>前面默认参数已知。实际对象可能随负载、温度或工况变化，自校正器便把“估计参数”和“计算控制”放进同一个循环。</p>
 <ol><li>采集当前输出，找到与它对应的历史输入输出。</li><li>比较真实输出与模型预测，得到预测残差。</li><li>用残差修正参数，再计算这一拍的控制量。</li></ol>
 <p>显式方法先辨识对象模型，再重新设计控制器；隐式方法直接估计控制需要的组合参数。两者都依赖数据质量，不能因为控制器在运行就假定参数一定收敛。</p>
-<h3>RLS 只记住“旧估计 + 残差修正”</h3>
+<h3>递推参数估计</h3>
 <div class="equation">\[\hat\theta(k)=\hat\theta(k-1)+K(k)\,\eta(k).\]</div>
 <p>\(\hat\theta\) 是参数估计，\(\eta\) 是实际输出减去预测输出，\(K\) 决定这一拍修正多少。数据向量 \(\varphi\) 装的是已知历史信号，不是未知参数；残差也不等于直接测到了真实噪声。</p>
 <p>遗忘因子 \(\rho=1\) 保留旧数据的影响；减小 \(\rho\) 会更重视新数据，有利于跟踪变化，也容易受噪声影响。调它是在权衡“跟得快”与“估得稳”。</p>
-<details><summary>实现时最容易忽略的条件</summary><p>时刻 \(k\) 的输出应与 \(k-d\) 时刻相应的回归数据配对；计算当前控制时则使用当前数据。时间错一拍，估计就会偏离对象。还需要足够激励、合理的噪声处理，以及避免用接近零的输入增益做除法。固定输入首项系数能简化辨识，但固定错误也会影响控制；有色噪声下，普通最小二乘不能无条件保证无偏。</p></details>
+<div class="explanation"><h4>实现条件</h4><p>时刻 \(k\) 的输出应与 \(k-d\) 时刻相应的回归数据配对；计算当前控制时则使用当前数据。时间错一拍，估计就会偏离对象。还需要足够激励、合理的噪声处理，以及避免用接近零的输入增益做除法。固定输入首项系数能简化辨识，但固定错误也会影响控制；有色噪声下，普通最小二乘不能无条件保证无偏。</p></div>
 </section>
 
-<section id="gmv" class="chapter-section"><h2>2.4 广义最小方差：输出要稳，动作也要有代价</h2>
-<p>普通 MVC 只追求输出误差小，可能要求很大的输入。GMV 在目标中增加输入惩罚：</p>
+<section id="gmv" class="chapter-section"><h2>广义最小方差</h2>
+<p>普通 MVC 只追求输出误差小，可能要求很大的输入。GMV 将输入惩罚加入目标函数。</p>
 <div class="equation">\[J_2=E\{[y(k+d)-y_r(k+d)]^2+r\,u^2(k)\}.\]</div>
 <p>\(r\) 表示多在意控制动作的代价。它是软惩罚，不是执行器的硬限幅，也不是对输入变化率的惩罚。加入它以后，要重新检查误差、输入大小和稳定性，不能仅凭“\(r&gt;0\)”就认定系统稳定。</p>
-<h3>先读 D，再求 F、G，最后选 r</h3>
+<h3>模型与权重</h3>
 <p>一般模型的对象通道是 \(Bq^{-d}/A\)，噪声通道是 \(C/D\)。\(D\) 直接从噪声通道读取，不是自己选择的设计参数；预测分解相应改为 \(C=DF+q^{-d}G\)。原来的 CARMA 模型恰好有 \(D=A\)。</p>
-<details><summary>常见特例：D=A、目标为零</summary><div class="equation">\[u(k)=-\frac{G}{BF+(r/b_0)C}y(k).\]</div><p>\(b_0\) 为 \(B\) 的首项系数，须非零。取 \(r=0\) 回到 MVC；闭环特征式由 \(BC\) 变为 \(C[B+(r/b_0)A]\)。这说明权重会改变极点，适当选择可能让非逆稳定对象获得稳定闭环，但必须逐题验根。\(D\ne A\) 时不能直接套这个简化式。</p></details>
-<p>设计顺序是：读清对象和噪声模型 → 选择正确预测时域 → 求控制律 → 找到严格稳定的权重范围 → 比较输出与输入表现。下面第 4、5 题和极点实验就是这条思路的具体应用。</p>
+<div class="explanation"><h4>零目标特例</h4><div class="equation">\[u(k)=-\frac{G}{BF+(r/b_0)C}y(k).\]</div><p>\(b_0\) 为 \(B\) 的首项系数，须非零。取 \(r=0\) 回到 MVC；闭环特征式由 \(BC\) 变为 \(C[B+(r/b_0)A]\)。这说明权重会改变极点，适当选择可能让非逆稳定对象获得稳定闭环，但必须逐题验根。\(D\ne A\) 时不能直接套这个简化式。</p></div>
+<p>设计顺序是，读清对象和噪声模型 → 选择正确预测时域 → 求控制律 → 找到严格稳定的权重范围 → 比较输出与输入表现。下面第 4、5 题和极点实验就是这条思路的具体应用。</p>
 </section>
 
 <section id="exercises" class="chapter-section"><h2>课后习题</h2>
 <p>这里保留每题的判断路径与关键结果。完整题面和手写计算见<a href="#sources">资料档案</a>；阅读时先判断“这题要检查什么”，再看计算结果。</p>
-<article class="exercise" id="exercise1"><h3>题 1 · 稳定与逆稳定，要分开判断</h3><p><strong>思路：</strong>分别提取 \(A,B\)，求根并统一到 \(q\) 平面。对象极点决定对象稳定性，输入零点决定能否稳定求逆。</p><p><strong>结论：</strong>\(A\) 的根为 −1、−0.9，有根在单位圆上，对象不满足严格稳定；\(B\) 的根为 −2.5，不能稳定求逆。手写答案的结论正确，但根模的不等式要修正。</p></article>
-<article class="exercise" id="exercise2"><h3>题 2 · 从预测到控制，再用方差验证</h3><p><strong>思路：</strong>延迟两拍，所以做两步预测；求出 \(F,G\) 后抵消可预测部分，再检查闭环根与输出方差。不能只得到控制律就结束。</p><p><strong>结论：</strong>\(F=1+1.5q^{-1},G=1.2\)。闭环根 −0.5、−0.7 均稳定；理论方差从 \(7.25\sigma^2\) 降到 \(3.25\sigma^2\)，降低约 55.17%。交互实验可观察这种改善与输入动作。</p><details><summary>用于仿真的模型与控制式</summary><div class="equation">\[y(k)-0.8y(k-1)=u(k-2)+0.5u(k-3)+v(k)+0.7v(k-1).\]</div><div class="equation">\[u(k)=-1.2y(k)-2u(k-1)-0.75u(k-2).\]</div><p>验算方差时，历史输出与历史噪声可能相关，不能随意删去交叉项。有限样本的仿真值也不会恰好等于理论值。</p></details></article>
-<article class="exercise" id="exercise3"><h3>题 3 · 配系数的目的，是完成预测分解</h3><p><strong>思路：</strong>设定 \(F,G\) 的次数，逐项比较 \(C=AF+q^{-d}G\)，再代回检查。右侧展开出现的高次项，即使左侧没有，也必须令其系数为零。</p><p><strong>结论：</strong>令 \(x=q^{-1}\)，得到 \(F=1-4.1x,G=10.35+3.28x\)。本题最容易漏掉的是 \(x^3\) 项，而不是某个复杂计算技巧。</p></article>
+<article class="exercise" id="exercise1"><h3>题1 稳定性</h3><p><strong>解题思路</strong> 分别提取 \(A,B\)，求根并统一到 \(q\) 平面。对象极点决定对象稳定性，输入零点决定能否稳定求逆。</p><p><strong>计算结果</strong> \(A\) 的根为 −1、−0.9，有根在单位圆上，对象不满足严格稳定；\(B\) 的根为 −2.5，不能稳定求逆。手写答案的结论正确，但根模的不等式要修正。</p></article>
+<article class="exercise" id="exercise2"><h3>题2 方差验证</h3><p><strong>解题思路</strong> 延迟两拍，所以做两步预测；求出 \(F,G\) 后抵消可预测部分，再检查闭环根与输出方差。不能只得到控制律就结束。</p><p><strong>计算结果</strong> \(F=1+1.5q^{-1},G=1.2\)。闭环根 −0.5、−0.7 均稳定；理论方差从 \(7.25\sigma^2\) 降到 \(3.25\sigma^2\)，降低约 55.17%。交互实验可观察这种改善与输入动作。</p><div class="explanation"><h4>仿真控制式</h4><div class="equation">\[y(k)-0.8y(k-1)=u(k-2)+0.5u(k-3)+v(k)+0.7v(k-1).\]</div><div class="equation">\[u(k)=-1.2y(k)-2u(k-1)-0.75u(k-2).\]</div><p>验算方差时，历史输出与历史噪声可能相关，不能随意删去交叉项。有限样本的仿真值也不会恰好等于理论值。</p></div></article>
+<article class="exercise" id="exercise3"><h3>题3 预测分解</h3><p><strong>解题思路</strong> 设定 \(F,G\) 的次数，逐项比较 \(C=AF+q^{-d}G\)，再代回检查。右侧展开出现的高次项，即使左侧没有，也必须令其系数为零。</p><p><strong>计算结果</strong> 令 \(x=q^{-1}\)，得到 \(F=1-4.1x,G=10.35+3.28x\)。本题最容易漏掉的是 \(x^3\) 项，而不是某个复杂计算技巧。</p></article>
 <blockquote><p>第 4、5 题的题面写一步指标，但对象延迟两拍。以下沿用手写答案的两步指标解释。若严格逐拍优化题面的 \(y^2(k+1)+ru^2(k)\)，当前输入尚不能影响该输出，\(r&gt;0\) 时会得到 \(u(k)=0\)，不能直接得到下面的控制律。</p></blockquote>
-<article class="exercise" id="exercise4"><h3>题 4 · 用权重把闭环极点移回单位圆</h3><p><strong>思路：</strong>本题 \(D=A\)，可用简化 GMV 公式。先求闭环特征式，再要求可变极点 \((1.6+0.8r)/(1+r)\) 严格小于 1。</p><p><strong>结论：</strong>稳定范围为 \(r&gt;3\)，不能取边界。取 \(r=5\) 时，闭环极点为 0.7、约 0.9333。</p><details><summary>关键计算结果</summary><p>\(A=D=1-0.8x,B=1-1.6x,C=1-0.7x,d=2\)；得到 \(F=1+0.1x,G=0.08\)。</p><div class="equation">\[r=5:\quad u(k)=-\frac{0.08}{6-5q^{-1}-0.16q^{-2}}y(k).\]</div></details></article>
-<article class="exercise" id="exercise5"><h3>题 5 · 噪声通道变了，预测分解也要跟着变</h3><p><strong>思路：</strong>本题 \(D\ne A\)，必须分解 \(C/D\)，不能照搬上一题。然后检查可变极点 \((3+0.3r)/(1+r)\)，以及其他固定极点。</p><p><strong>结论：</strong>稳定范围为 \(r&gt;20/7\approx2.857142857\)。取 \(r=4\) 时，极点为 0.3、0.2、0.84。手写答案末式缺少负号；写成 \(r&gt;2.85\) 也会误包含不稳定区间。</p><details><summary>核对后的控制律</summary><p>\(A=1-0.3x,B=1-3x,C=1-0.2x,D=1+0.6x,d=2\)；由 \(C=DF+x^2G\) 得 \(F=1-0.8x,G=0.48\)。</p><div class="equation">\[r=4:\quad u(k)=-\frac{0.48-0.144q^{-1}}{5-5.2q^{-1}+0.36q^{-2}+1.44q^{-3}}y(k).\]</div></details></article>
-<article class="exercise" id="exercise6"><h3>题 6 · 为什么 GMV 可能处理非逆稳定对象？</h3><p>普通 MVC 需要直接对输入通道求逆，非最小相位零点会带来不稳定内部动态。GMV 加入输入代价后改变闭环特征式，提供了调整极点的位置的机会。<strong>因此是“适当权重可能改善稳定性”，不是“加权后必然稳定”。</strong>第 4、5 题给出的权重下限就是必须验算的证据。</p></article>
+<article class="exercise" id="exercise4"><h3>题4 权重范围</h3><p><strong>解题思路</strong> 本题 \(D=A\)，可用简化 GMV 公式。先求闭环特征式，再要求可变极点 \((1.6+0.8r)/(1+r)\) 严格小于 1。</p><p><strong>计算结果</strong> 稳定范围为 \(r&gt;3\)，不能取边界。取 \(r=5\) 时，闭环极点为 0.7、约 0.9333。</p><div class="explanation"><h4>计算结果</h4><p>\(A=D=1-0.8x,B=1-1.6x,C=1-0.7x,d=2\)；得到 \(F=1+0.1x,G=0.08\)。</p><div class="equation">\[r=5:\quad u(k)=-\frac{0.08}{6-5q^{-1}-0.16q^{-2}}y(k).\]</div></div></article>
+<article class="exercise" id="exercise5"><h3>题5 噪声通道</h3><p><strong>解题思路</strong> 本题 \(D\ne A\)，必须分解 \(C/D\)，不能照搬上一题。然后检查可变极点 \((3+0.3r)/(1+r)\)，以及其他固定极点。</p><p><strong>计算结果</strong> 稳定范围为 \(r&gt;20/7\approx2.857142857\)。取 \(r=4\) 时，极点为 0.3、0.2、0.84。手写答案末式缺少负号；写成 \(r&gt;2.85\) 也会误包含不稳定区间。</p><div class="explanation"><h4>控制律核对</h4><p>\(A=1-0.3x,B=1-3x,C=1-0.2x,D=1+0.6x,d=2\)；由 \(C=DF+x^2G\) 得 \(F=1-0.8x,G=0.48\)。</p><div class="equation">\[r=4:\quad u(k)=-\frac{0.48-0.144q^{-1}}{5-5.2q^{-1}+0.36q^{-2}+1.44q^{-3}}y(k).\]</div></div></article>
+<article class="exercise" id="exercise6"><h3>题6 非逆稳定</h3><p>普通 MVC 需要直接对输入通道求逆，非最小相位零点会带来不稳定内部动态。GMV 加入输入代价后改变闭环特征式，提供了调整极点的位置的机会。<strong>因此是“适当权重可能改善稳定性”，不是“加权后必然稳定”。</strong>第 4、5 题给出的权重下限就是必须验算的证据。</p></article>
 </section>
-<section id="lab" class="chapter-section"><h2>交互实验室：观察设计取舍</h2><p>以下均为离散数学模型的数值实验，不是实际平台数据。所有计算在浏览器本地完成，无需联网。输出、输入与噪声按题目作归一化处理，未指定实际物理单位。</p>
-<div class="lab-panel" id="variance-lab"><h3>实验 A · 作业第 2 题的方差与输入</h3><p class="muted">同一组高斯白噪声驱动有控制和无控制系统；零初值；预热 500 拍后统计；曲线仅显示统计段前 180 拍。</p><div class="controls"><label>噪声标准差 σ<input id="noise-sigma" type="number" min="0.1" max="5" step="0.1" value="1"></label><label>统计样本数 N<select id="sample-count"><option value="2000">2,000</option><option value="10000" selected>10,000</option><option value="50000">50,000</option></select></label><label>随机种子<input id="random-seed" type="number" min="1" max="2147483647" step="1" value="20261012"></label><button id="run-sim" class="button primary" type="button">重新计算</button><button id="download-csv" type="button">导出本次 CSV</button></div><p id="sim-error" role="alert" class="muted"></p><div class="metrics" aria-live="polite"><div><strong id="var-open">—</strong><span>无控制样本方差 / σ²<br>理论值 7.25</span></div><div><strong id="var-controlled">—</strong><span>MVC 样本方差 / σ²<br>理论值 3.25</span></div><div><strong id="variance-reduction">—</strong><span>本次样本方差降幅<br>理论值 55.17%</span></div></div><div class="legend"><span><b style="background:#9babb9"></b>无控制输出</span><span><b style="background:#2464a1"></b>MVC 输出</span></div><svg id="output-plot" class="plot" viewBox="0 0 800 250" role="img" aria-label="第2题输出响应，横轴采样序号，纵轴归一化输出"></svg><div class="legend"><span><b style="background:#24705d"></b>MVC 控制输入 u(k)</span></div><svg id="input-plot" class="plot" viewBox="0 0 800 230" role="img" aria-label="第2题控制输入，横轴采样序号，纵轴归一化输入"></svg><p class="muted" id="simulation-caption"></p><details><summary>实验顺序与统计口径</summary><p>每拍先生成 \(v(k)\)，再用已保存的 \(u(k-2),u(k-3)\) 计算 \(y(k)\)，最后利用 \(y(k)\) 计算 \(u(k)\)。噪声使用带种子的伪随机数与 Box–Muller 变换；方差为去均值后的总体样本方差（除以 N）。CSV 包含预热段、噪声、两组输出与控制量，以及样本是否参与统计的标记。</p><p>理论值是稳态总体方差，有限样本结果不应被强行做成完全相等。改变种子可检查统计波动；增加样本数通常使估计更接近理论。</p></details></div>
-<div class="lab-panel"><h3>实验 B · 控制权重怎样移动闭环极点？</h3><div class="controls"><label>选择作业模型<select id="pole-model"><option value="4">第 4 题 · D=A</option><option value="5">第 5 题 · D≠A</option></select></label><label>控制权重 r：<output id="weight-label">5.00</output><input id="control-weight" type="range" min="0" max="12" step="0.01" value="5"></label></div><p id="pole-status" class="status" aria-live="polite"></p><svg id="pole-plot" class="plot" viewBox="0 0 800 270" role="img" aria-label="q平面单位圆与闭环极点，实轴Re(q)，虚轴Im(q)"></svg><p class="muted">实轴 Re(q)，虚轴 Im(q)，均无量纲。蓝点为随 r 变化的极点，灰点为固定极点。所有根必须严格在单位圆内；只展示极点位置，不把它当作控制能耗或完整时域响应。</p></div>
+<section id="lab" class="chapter-section"><h2>交互实验室</h2><p>以下均为离散数学模型的数值实验，不是实际平台数据。所有计算在浏览器本地完成，无需联网。输出、输入与噪声按题目作归一化处理，未指定实际物理单位。</p>
+<div class="lab-panel" id="variance-lab"><h3>实验A 方差</h3><p class="muted">同一组高斯白噪声驱动有控制和无控制系统；零初值；预热 500 拍后统计；曲线仅显示统计段前 180 拍。</p><div class="controls"><label>噪声标准差 σ<input id="noise-sigma" type="number" min="0.1" max="5" step="0.1" value="1"></label><label>统计样本数 N<select id="sample-count"><option value="2000">2,000</option><option value="10000" selected>10,000</option><option value="50000">50,000</option></select></label><label>随机种子<input id="random-seed" type="number" min="1" max="2147483647" step="1" value="20261012"></label><button id="run-sim" class="button primary" type="button">重新计算</button><button id="download-csv" type="button">导出本次 CSV</button></div><p id="sim-error" role="alert" class="muted"></p><div class="metrics" aria-live="polite"><div><strong id="var-open">待计算</strong><span>无控制样本方差 / σ²<br>理论值 7.25</span></div><div><strong id="var-controlled">待计算</strong><span>MVC 样本方差 / σ²<br>理论值 3.25</span></div><div><strong id="variance-reduction">待计算</strong><span>本次样本方差降幅<br>理论值 55.17%</span></div></div><div class="legend"><span><b style="background:#9babb9"></b>无控制输出</span><span><b style="background:#2464a1"></b>MVC 输出</span></div><svg id="output-plot" class="plot" viewBox="0 0 800 250" role="img" aria-label="第2题输出响应，横轴采样序号，纵轴归一化输出"></svg><div class="legend"><span><b style="background:#24705d"></b>MVC 控制输入 u(k)</span></div><svg id="input-plot" class="plot" viewBox="0 0 800 230" role="img" aria-label="第2题控制输入，横轴采样序号，纵轴归一化输入"></svg><p class="muted" id="simulation-caption"></p><div class="explanation"><h4>实验统计方法</h4><p>每拍先生成 \(v(k)\)，再用已保存的 \(u(k-2),u(k-3)\) 计算 \(y(k)\)，最后利用 \(y(k)\) 计算 \(u(k)\)。噪声使用带种子的伪随机数与 Box-Muller 变换；方差为去均值后的总体样本方差（除以 N）。CSV 包含预热段、噪声、两组输出与控制量，以及样本是否参与统计的标记。</p><p>理论值是稳态总体方差，有限样本结果不应被强行做成完全相等。改变种子可检查统计波动；增加样本数通常使估计更接近理论。</p></div></div>
+<div class="lab-panel"><h3>实验B 极点</h3><div class="controls"><label>选择作业模型<select id="pole-model"><option value="4">第 4 题 · D=A</option><option value="5">第 5 题 · D≠A</option></select></label><label>控制权重 r，<output id="weight-label">5.00</output><input id="control-weight" type="range" min="0" max="12" step="0.01" value="5"></label></div><p id="pole-status" class="status" aria-live="polite"></p><svg id="pole-plot" class="plot" viewBox="0 0 800 270" role="img" aria-label="q平面单位圆与闭环极点，实轴Re(q)，虚轴Im(q)"></svg><p class="muted">实轴 Re(q)，虚轴 Im(q)，均无量纲。蓝点为随 r 变化的极点，灰点为固定极点。所有根必须严格在单位圆内；只展示极点位置，不把它当作控制能耗或完整时域响应。</p></div>
 </section>
 
 <section id="review" class="chapter-section"><h2>曾经卡住的地方</h2>
-<details><summary>既然预测被控制为零，为什么输出还有波动？</summary><p>被抵消的是当前信息能预测的部分。未来噪声还没有发生，实际输出仍然会波动；不要把预测值与真实未来输出混为一谈。</p></details>
-<details><summary>公式已经最优，为什么还要验稳定性？</summary><p>“最优”回答的是某个指标如何取小；“稳定”回答的是系统持续运行会不会发散。得到控制律之后，闭环根、内部动态和执行器限制仍要分别检查。</p></details>
-<details><summary>哪些量来自模型，哪些量需要计算或选择？</summary><p>\(A,B,C,D,d\) 从模型读取或辨识；\(F,G\) 为预测分解而计算；\(r\) 由设计者权衡选取。RLS 中，\(\varphi\) 是已知数据，\(\theta\) 是待估系数，不能互换。</p></details>
+<div class="explanation"><h4>输出为何波动</h4><p>被抵消的是当前信息能预测的部分。未来噪声还没有发生，实际输出仍然会波动；不要把预测值与真实未来输出混为一谈。</p></div>
+<div class="explanation"><h4>最优与稳定</h4><p>“最优”回答的是某个指标如何取小；“稳定”回答的是系统持续运行会不会发散。得到控制律之后，闭环根、内部动态和执行器限制仍要分别检查。</p></div>
+<div class="explanation"><h4>参数的来源</h4><p>\(A,B,C,D,d\) 从模型读取或辨识；\(F,G\) 为预测分解而计算；\(r\) 由设计者权衡选取。RLS 中，\(\varphi\) 是已知数据，\(\theta\) 是待估系数，不能互换。</p></div>
 </section>
-<section id="engineering" class="chapter-section"><h2>工程迁移：把重点放在时间对齐与验证</h2>
-<p>这章最值得迁移到精密运动控制的能力，是用离散模型解释延迟、用残差修正模型，并同时检查误差、输入代价与稳定性。单轴平台中的输入可能是力矩或速度指令，输出可能是编码器位置；必须先明确已有伺服环的边界，再谈模型与算法。</p>
+<section id="engineering" class="chapter-section"><h2>工程应用</h2>
+<p>在精密运动控制中，这些方法可以用来解释采样延迟，并根据输入输出数据修正模型。控制效果需要同时看误差、输入代价与稳定性。单轴平台中的输入可能是力矩或速度指令，输出可能是编码器位置；必须先明确已有伺服环的边界，再谈模型与算法。</p>
 <p>从课堂仿真走向设备，还需要实测辨识、采样与通信延迟测量、噪声评估、限幅和实时计算验证。评价时同时看位置误差 RMS、输入峰值和计算耗时。在线站同步测量中，位置、触发和探测器数据还必须对齐同一时间基准，否则错一拍的数据可能被误认为对象动态。</p>
-<p>本页实验只验证数学模型。学习上优先掌握“建模 → 时间对齐 → 差分实现 → 稳定性与性能验证”，不必先背熟每个特例的长公式。</p>
+<p>本页实验只验证数学模型。实际编程时，先把采样数据对齐，再核对逐拍计算的顺序；这些环节出错，公式正确也得不到预期结果。</p>
 </section>
-<section id="sources" class="chapter-section"><h2>资料档案</h2><p>课件、题面与作业答案已存入网站目录，移动整个文件夹后仍可离线回查。页码引用均指 PDF 页序。</p><a class="source-link" href="../sources/chapter2-slides.pdf">课堂 PPT · 第 2 章 基于优化策略的自校正器 <small>47 页 · 本章公式与结构的主要来源</small></a><a class="source-link" href="exercise-sheet.html">第 2 章习题 <small>1 页 · 浏览器中直接查看原始题面</small></a><a class="source-link" href="../sources/chapter2-exercises.pdf" download>下载第 2 章习题 PDF <small>原始题面</small></a><a class="source-link" href="../sources/chapter2-answers-redacted.pdf">第二章作业答案 <small>4 页 · 正文旁标明复算差异</small></a><p>整理原则：课件给出课程范围，习题提供计算验证。有冲突时结合恒等式展开与根的计算复核。工程补充为本页整理时增加，不表示已完成设备实验。</p></section>
+<section id="sources" class="chapter-section"><h2>资料档案</h2><p>课件、题面与作业答案已存入网站目录，移动整个文件夹后仍可离线回查。页码引用均指 PDF 页序。</p><a class="source-link" href="../sources/chapter2-slides.pdf">课堂 PPT · 第 2 章 基于优化策略的自校正器 <small>47 页 · 本章公式与结构的主要来源</small></a><a class="source-link" href="exercise-sheet.html">第 2 章习题 <small>1 页 · 浏览器中直接查看原始题面</small></a><a class="source-link" href="../sources/chapter2-exercises.pdf" download>下载第 2 章习题 PDF <small>原始题面</small></a><a class="source-link" href="../sources/chapter2-answers-redacted.pdf">第二章作业答案 <small>4 页 · 正文旁标明复算差异</small></a><p>课件用于确定课程范围，习题用于计算核对。有冲突时结合恒等式展开与根的计算复核。工程补充为本页整理时增加，不表示已完成设备实验。</p></section>
 </main>
   <footer>自适应控制学习笔记</footer>
 </div>
